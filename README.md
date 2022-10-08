@@ -68,7 +68,10 @@ Big IP安全相关工具。
 
 ## 4.1 Release下载 
 
-去release页面下载
+去release页面下载:
+```azure
+https://github.com/CC11001100/big-ip-hacker/releases
+```
 
 ## 4.2 手动编译
 
