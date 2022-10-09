@@ -4,14 +4,15 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/CC11001100/go-StringBuilder/pkg/string_builder"
-	"github.com/fatih/color"
-	"github.com/go-resty/resty/v2"
 	"net"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/CC11001100/go-StringBuilder/pkg/string_builder"
+	"github.com/fatih/color"
+	"github.com/go-resty/resty/v2"
 )
 
 // FromUrl 从url中解析
@@ -24,13 +25,16 @@ func FromUrl(targetUrl string) {
 		_, _ = fmt.Fprint(color.Output, err.Error())
 		return
 	}
-	bigIpCookie, err := parseBIGipCookieFromHttpResponse(response)
+	bigIpCookies, err := parseBIGipCookieFromHttpResponse(response)
 	if err != nil {
 		_, _ = fmt.Fprint(color.Output, err.Error())
 		return
 	}
 
-	FromCookie(bigIpCookie)
+	for _, bigIpCookie := range bigIpCookies {
+		FromCookie(bigIpCookie)
+	}
+
 }
 
 // FromCookie 从Cookie中解析
@@ -76,14 +80,14 @@ func request(targetUrl string) (*resty.Response, error) {
 }
 
 // 从响应中解析Cookie，如果没有解析到的话会返回错误
-func parseBIGipCookieFromHttpResponse(response *resty.Response) (string, error) {
+func parseBIGipCookieFromHttpResponse(response *resty.Response) ([]string, error) {
 	fmt.Printf("\ntry to find big ip cookie from response headers...\n")
-	var bigIpCookie string
+	var bigIpCookie []string
 	index := 1
 	for name, valueSlice := range response.Header() {
 		for _, value := range valueSlice {
 			if strings.HasPrefix(value, "BIGipServer~") {
-				bigIpCookie = value
+				bigIpCookie = append(bigIpCookie, value)
 				color.HiGreen("%3d: %s : %s\n", index, name, value)
 			} else {
 				fmt.Printf("%3d: %s : %s\n", index, name, value)
@@ -91,8 +95,8 @@ func parseBIGipCookieFromHttpResponse(response *resty.Response) (string, error) 
 			index++
 		}
 	}
-	if bigIpCookie == "" {
-		return "", errors.New(color.HiRedString("The cookie for BIG IP could not be found in the response header\n"))
+	if len(bigIpCookie) == 0 {
+		return bigIpCookie, errors.New(color.HiRedString("The cookie for BIG IP could not be found in the response header\n"))
 	}
 	return bigIpCookie, nil
 }
